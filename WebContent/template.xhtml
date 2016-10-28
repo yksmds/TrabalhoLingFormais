@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core" lang="pt-br">
+<h:head>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+	<title>Trabalho 3 de LFA</title>
+
+	<link href="../resources/styles/stylesheet.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/styles/estilo_yks.css" rel="stylesheet" type="text/css" />
+
+	<link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/bootstrap/bootstrap.css" />
+	<link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/styles/sobrescreve.css" />
+	
+	<style>
+		.alert.alert-warning {
+    		padding: 7px;
+		}
+	</style>
+</h:head>
+
+<h:body>
+	<div class="container">
+		<h:form id="form"  prependId="false">
+		<p:growl id="growl" life="9000" showDetail="true"/>
+			<div class="row">
+				<div class="col-md-12">
+					<h2>Entre com o Autômato!</h2>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12 col-sm-8 col-md-6">
+					<p:inputText placeholder="Digite o alfabeto separado por ';'"
+						value="#{tabelaAutomato.alfabeto}"
+						styleClass="campoGrande espacoBotom" />
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12 col-sm-8 col-md-6">
+					<p:inputText placeholder="Digite o Estados Ex: q1;q2;q3..." value="#{tabelaAutomato.estado}" styleClass="campoGrande espacoBotom">
+						<p:ajax event="blur" update="menuEstados" listener="#{tabelaAutomato.quebraEstado}" />
+					</p:inputText>
+				</div>
+				<div class="col-md-6">
+					<div class="alert alert-warning" role="alert">
+						<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+						<span class="sr-only">Atenção:</span>
+						O Primeiro estado será o estado inicial. Separe por ';'
+					</div>
+				</div>
+			</div>
+			
+			<div class="row espacoBotom">
+				<div class="col-xs-12 col-sm-8 col-md-6">
+					<p:selectCheckboxMenu id="menuEstados" style="width: 100%;"
+						value="#{tabelaAutomato.estadosSelecionados}"
+						label="Marque o(s) Estado(s) final(is)"
+						filterMatchMode="startsWith">
+						<f:selectItems value="#{tabelaAutomato.estados}" />
+					</p:selectCheckboxMenu>
+				</div>
+			</div>
+			
+			<p:commandLink value="Criar Tabela" update="tabelaAutomato :growl" styleClass="btn btn-info" 
+				actionListener="#{tabelaAutomato.criarTabela}" style="margin-right: 1em;"/>
+			<p:commandLink value="Limpar Campos" update="@form" styleClass="btn btn-warning" 
+				actionListener="#{tabelaAutomato.limpar}"/>
+				
+
+			<p:dataTable var="automato" value="#{tabelaAutomato.estadosDoAutomato}" editMode="cell" emptyMessage="Preecha os campos para criar o Autômato"
+				editable="true"  style="margin-top:40px; margin-bottom:40px;" id="tabelaAutomato">
+				
+				<f:facet name="header">
+          		 :. AUTÔMATO .:
+        		</f:facet>
+
+				<p:ajax event="cellEdit" listener="#{tabelaAutomato.onCellEdit}" update=":growl" />
+
+				<p:columnGroup type="header">
+					<p:row>
+						<p:column rowspan="2" headerText="Estados" />
+						<p:column colspan="#{tabelaAutomato.alfabetoCount}" headerText="Alfabeto" />
+					</p:row>
+					<p:row>
+						<ui:repeat value="#{tabelaAutomato.alfabetos}" var="caracter" varStatus="loop">
+							<p:column headerText="#{caracter}" id="col#{loop.index}" footerText="col#{loop.index}" />
+						</ui:repeat>
+					</p:row> 
+				</p:columnGroup>
+
+				<p:column style="text-align:center;">
+					<h:outputText value="#{automato.estado}" style="font-weight: bold;"/>
+				</p:column>
+
+				<p:columns value="#{tabelaAutomato.alfabetos}" headerText="#{letra}" var="letra" 
+					columnIndexVar="colIndexVar">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{automato.estadoTransicao}" style="text-align:right;" />
+						</f:facet>
+						<f:facet name="input">
+							<h:selectOneMenu value="#{automato.estadoTransicao}" style="width:100%">
+								 <p:ajax listener="#{tabelaAutomato.pegaColuna(letra)}" update=":growl"/> <!-- TOOOP -->
+								 <f:selectItem itemLabel="Selecione o Estado..." itemValue="" noSelectionOption="true"/>
+								<f:selectItems value="#{tabelaAutomato.estados}" var="man" itemLabel="#{man}" itemValue="#{man}" />
+							</h:selectOneMenu>
+						</f:facet>
+					</p:cellEditor>
+				</p:columns>
+
+				<f:facet name="footer">
+         			  :. UNIVERSIDADE FEDERAL DO TOCANTINS .:
+        		</f:facet>
+			</p:dataTable>
+			
+			<div class="row">
+				<div class="col-xs-12 col-sm-8 col-md-6">
+					<p:inputText placeholder="Digite a palavra à ser Validada" value="#{tabelaAutomato.palavra}"
+						styleClass="campoGrande espacoBotom" />
+				</div>
+			</div>
+			<p:commandLink value="Validar Autômato" update="tabelaAutomato :growl" styleClass="btn btn-success" 
+				actionListener="#{tabelaAutomato.validarAutomato}"/>
+			
+		</h:form>
+	</div>
+</h:body>
+</html>
